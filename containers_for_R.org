@@ -1,0 +1,120 @@
+#+TITLE: Containers for R
+#+AUTHOR: Cole Brokamp
+#+EMAIL: cole.brokamp@gmail.com
+#+DATE: September 4, 2019
+
+* Containers
+** what are containers?
+   - like a VM, but lighter-weight framework for scalability
+   - means faster, more robust
+** why containers?
+   - research reproducibility
+   - computational mobility
+   - interoperability
+** Docker
+   - [[https://docs.docker.com/][Docker documentation]]
+   - [[https://ropenscilabs.github.io/r-docker-tutorial/][R Docker tutorial by ropenscilabs]]
+   - [[https://arxiv.org/pdf/1410.0846.pdf][Introduction to Docker for reproducible research, with examples from the R environment (Carl Boettiger)]] 
+** Docker terminology
+   - image: a package defining a working environment
+   - container: an instance of an image / a running image
+   - Dockerfile: a file with a series of commands to build an image
+   - Docker Hub: a website/repository for sharing Docker images
+** Docker commands
+   - docker pull {user/repo}
+   - docker build -t {tag} {directory}
+   - docker run {image}
+     -p {ports}
+     -v {volume}
+     --rm # remove after running
+     -d # run in detached mode
+     -it # run in interactive terminal mode
+* Examples of Docker & R Usage
+** research reproducibility
+*** what is reproducible research?
+   - wide definitions, but all important
+   - [[https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6103790/figure/F2/][Nat Biotechnol. 2017 Apr; 35(4): 342–346 - Figure 2]]
+   - "being able to reproduce scientific output given access to raw data"
+   - [[https://www.force11.org/group/fairgroup/fairprinciples][FAIR]], [[https://medicine.umich.edu/dept/lhs/service-outreach/mobilizing-computable-biomedical-knowledge][MBCK]] 
+   - [[https://peerj.com/preprints/3192/][research compendium]]
+*** example: make a fixed working environment
+   - make a Docker container with code and documents necessary to run analysis
+     #+begin_src sh
+     cd dockeR_examples/fixed_working_environment
+     docker build -t my-cool-analysis .
+     docker run --rm -p 8787:8787 -e PASSWORD=hmmm my-cool-analysis
+     #+end_src
+   - push to Docker Hub to save and share
+     #+begin_src sh
+     docker tag my-cool-analysis colebrokamp/my-cool-analysis
+     #+end_src
+   - view on [[https://hub.docker.com/u/colebrokamp][Docker Hub]]
+*** not covered here
+   - R package versions
+   - system dependencies and versions
+   - filesystem sharing
+** computational mobility
+*** high performance computing
+   - clusters ([[https://bmi.cchmc.org/resources/clusters/computational-cluster][CCHMC HPC]], [[https://www.osc.edu/][OSC]], [[https://www.xsede.org/][XSEDE]], [[https://jetstream-cloud.org/][Jetstream]], [[https://www.psc.edu/bridges][Bridges]])
+   - local compute servers
+   - scalable load balancing
+*** Singularity
+   - [[https://sylabs.io/singularity/]]
+   - no admin rights required
+   - less isoloation - shares files with system
+   - targets scientific applications and computing clusters
+   - runs Docker images
+   - available on CCHMC HPC now
+     #+BEGIN_SRC sh
+     module load singularity/2.3.1
+     singularity pull docker://degauss/cchmc_batch_geocoder:latest
+     #+END_SRC
+*** more resources
+   - [[https://cran.r-project.org/web/packages/googleComputeEngineR/vignettes/docker-ssh-futures.html][use ~future~ package to run asynchronous R functions on cluster]]
+   - [[https://github.com/cole-brokamp/automagic][cole-brokamp/automagic]] for automated way to describe package dependencies
+   - [[https://github.com/cole-brokamp/dep][cole-brokamp/dep]] for automated setup of private library based on DESCRIPTION file
+** interoperable: access a service outside of R
+*** tools and environments may be complicated to setup
+*** example: offline geocoding
+   - setup environment: [[https://github.com/cole-brokamp/geocoder#traditional-installation][cole-brokamp/geocoder]]
+   - environment prebuilt as Docker image: [[https://github.com/cole-brokamp/geocoder_slim][geocoder_slim]]
+     - ~docker run --rm=true colebrokamp/geocoder_slim "3333 Burnet Ave Cincinnati OH 45229"~
+     - returns geocoding results as JSON to ~stdout~
+   - wrap service in R package: [[https://github.com/cole-brokamp/OfflineGeocodeR][OfflineGeocodeR]]
+     - ~OfflineGeocodeR::geocode(my_addresses)~
+*** more examples: R packages that call Docker containers
+   - ~Rselenium~ and ~splashr~ for web scraping
+   - ~osrm~ for travel paths/time with OSM
+   - ~H2O~
+** interoperable: create an R based service
+*** use cases
+   - R Shiny applications (example [[https://github.com/cole-brokamp/CFPOPD][CFPOPD app]])
+   - clinical prediction models (training and using)
+   - create an API for "production" using ~plumber~ package
+   - IDEs (R Studio, Jupyter)
+*** make things created in R easily available to others
+    - [[https://github.com/cole-brokamp/DeGAUSS#degauss][DeGAUSS]] 
+    - [[https://github.com/erikarasnick/PEPR_greenspace][PEPR greenspace]] 
+* R & Container Resources
+** Rocker
+   - [[https://www.rocker-project.org/][Rocker project]]
+   - [[https://github.com/rocker-org/rocker-versioned#version-stable-rocker-images][version-stable Rocker images]]
+   - [[https://journal.r-project.org/archive/2017/RJ-2017-065/index.html][An Introduction to Rocker: Docker Containers for R (Carl Boettiger and Dirk Eddelbuettel)]]
+** R packages for running docker
+   - [[https://github.com/richfitz/stevedore][richfitz/stevedore]] (HTTP based)
+   - [[https://github.com/bhaskarvk/docker][bhaskarvk/docker]] (python/reticulate interface to Docker API)
+   - [[https://github.com/wch/harbor][wch/harbor]] (shell based)
+** R packages for auto-generating dockerfiles
+   - [[https://github.com/o2r-project/containerit][o2r-project/containerit]] for projects and workspaces
+   - [[https://github.com/nanxstats/liftr][nanxstats/liftr]] for Rmd reports
+   - [[https://github.com/cole-brokamp/rize][cole-brokamp/rize]] for R Shiny applications
+   - [[https://github.com/ColinFay/dockerfiler][ColinFay/dockerfiler]] for editing Dockerfiles
+** binder
+   - [[https://github.com/rocker-org/binder][Use rocker/binder to auto deploy to mybinder.org]] 
+   - [[https://karthik.github.io/holepunch/][~holepunch~ R package for turning GitHub repo into a free, live instance]] 
+** ~dep~ package for R
+   - [[https://github.com/cole-brokamp/dep][cole-brokamp/dep]] find, document, and deploy packages that an R project depends on
+   - [[http://r-pkgs.had.co.nz/description.html][DESCRIPTION file]] 
+   - ~dep::ends()~ to create DESCRIPTION file with all project dependencies
+   - ~dep::loy()~ to create private package library from DESCRIPTION file
+   - ~dep::use_dockerfile()~ to create a Dockerfile from DESCRIPTION file
